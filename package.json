@@ -1,42 +1,30 @@
 {
-  "name": "@matrixai/typescript-demo-lib",
-  "version": "2.1.1",
-  "bin": {
-    "typescript-demo-lib": "dist/bin/typescript-demo-lib.js"
-  },
+  "name": "@matrixai/async-cancellable",
+  "version": "1.0.0",
   "author": "Roger Qiu",
-  "description": "TypeScript Demo Library Project",
+  "description": "Asynchronous Cancellation",
+  "keywords": [
+    "promise",
+    "cancel",
+    "cancellable"
+  ],
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/MatrixAI/TypeScript-Demo-Lib.git"
+    "url": "https://github.com/MatrixAI/js-async-cancellable.git"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "pkg": {
-    "assets": [
-      "dist/**/*.json"
-    ],
-    "scripts": [
-      "dist/lib/workers/worker.js"
-    ]
-  },
   "scripts": {
     "prepare": "tsc -p ./tsconfig.build.json",
     "build": "rimraf ./dist && tsc -p ./tsconfig.build.json",
     "postversion": "npm install --package-lock-only --ignore-scripts --silent",
     "ts-node": "ts-node",
     "test": "jest",
-    "lint": "eslint '{src,tests,scripts}/**/*.{js,ts}'",
-    "lintfix": "eslint '{src,tests,scripts}/**/*.{js,ts}' --fix",
+    "lint": "eslint '{src,tests,scripts,benches}/**/*.{js,ts}'",
+    "lintfix": "eslint '{src,tests,scripts,benches}/**/*.{js,ts}' --fix",
     "lint-shell": "find ./src ./tests ./scripts -type f -regextype posix-extended -regex '.*\\.(sh)' -exec shellcheck {} +",
-    "docs": "rimraf ./docs && typedoc --gitRevision master --tsconfig ./tsconfig.build.json --out ./docs src",
-    "pkg": "node ./scripts/pkg.js --no-dict=leveldown.js",
-    "typescript-demo-lib": "ts-node src/bin/typescript-demo-lib.ts"
-  },
-  "dependencies": {
-    "threads": "^1.6.5",
-    "uuid": "^8.3.0"
+    "docs": "rimraf ./docs && typedoc --gitRevision master --tsconfig ./tsconfig.build.json --out ./docs src"
   },
   "devDependencies": {
     "@swc/core": "^1.2.215",
@@ -50,9 +38,6 @@
     "eslint-plugin-prettier": "^4.0.0",
     "jest": "^28.1.1",
     "jest-junit": "^14.0.0",
-    "jest-mock-process": "^2.0.0",
-    "node-gyp-build": "^4.4.0",
-    "pkg": "5.7.0",
     "prettier": "^2.6.2",
     "rimraf": "^3.0.2",
     "ts-jest": "^28.0.5",

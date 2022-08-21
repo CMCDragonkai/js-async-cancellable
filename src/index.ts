@@ -1,1 +1,2 @@
-export { default as Library } from './lib/Library';
+export { default as PromiseCancellable } from './PromiseCancellable';
+export * as types from './types';
