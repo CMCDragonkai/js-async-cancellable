@@ -1,10 +1,17 @@
 import type { PromiseCancellableController } from './types';
 
 class PromiseCancellable<T> extends Promise<T> {
+  public static get [Symbol.species](): PromiseConstructor {
+    return Promise;
+  }
+
   public static resolve(): PromiseCancellable<void>;
   public static resolve<T>(value: T | PromiseLike<T>): PromiseCancellable<T>;
-  public static resolve<T>(value?: T | PromiseLike<T>): PromiseCancellable<T> {
-    return super.resolve(value) as PromiseCancellable<T>;
+  public static resolve<T>(
+    value?: T | PromiseLike<T>,
+  ): PromiseCancellable<void | T> {
+    if (value instanceof PromiseCancellable) return value;
+    return super.resolve(value) as PromiseCancellable<void | T>;
   }
 
   public static reject<T = never>(reason?: any): PromiseCancellable<T> {
@@ -23,17 +30,23 @@ class PromiseCancellable<T> extends Promise<T> {
     values: Iterable<T | PromiseLike<T>>,
     controller?: PromiseCancellableController,
   ): PromiseCancellable<Awaited<T>[]> {
-    const p = super.all(values) as PromiseCancellable<Awaited<T>[]>;
+    // The `super.all` calls `new PromiseCancellable`
+    const pC = super.all(values) as PromiseCancellable<Awaited<T>[]>;
     if (typeof controller === 'function') {
-      controller(p.abortController.signal);
+      pC.abortController = new AbortController();
+      controller(pC.abortController.signal);
     } else if (controller != null) {
-      p.abortController = controller;
+      pC.abortController = controller;
     } else {
-      p.abortController.signal.onabort = () => {
-        p.reject(p.abortController.signal.reason);
-      };
+      pC.abortController.signal.addEventListener(
+        'abort',
+        () => {
+          pC.reject(pC.abortController.signal.reason);
+        },
+        { once: true },
+      );
     }
-    return p;
+    return pC;
   }
 
   public static allSettled<T extends readonly unknown[] | []>(
@@ -50,19 +63,25 @@ class PromiseCancellable<T> extends Promise<T> {
     values: Iterable<T | PromiseLike<T>>,
     controller?: PromiseCancellableController,
   ): PromiseCancellable<PromiseSettledResult<Awaited<T>>[]> {
-    const p = super.allSettled(values) as PromiseCancellable<
+    // The `super.allSettled` calls `new PromiseCancellable`
+    const pC = super.allSettled(values) as PromiseCancellable<
       PromiseSettledResult<Awaited<T>>[]
     >;
     if (typeof controller === 'function') {
-      controller(p.abortController.signal);
+      pC.abortController = new AbortController();
+      controller(pC.abortController.signal);
     } else if (controller != null) {
-      p.abortController = controller;
+      pC.abortController = controller;
     } else {
-      p.abortController.signal.onabort = () => {
-        p.reject(p.abortController.signal.reason);
-      };
+      pC.abortController.signal.addEventListener(
+        'abort',
+        () => {
+          pC.reject(pC.abortController.signal.reason);
+        },
+        { once: true },
+      );
     }
-    return p;
+    return pC;
   }
 
   public static race<T extends readonly unknown[] | []>(
@@ -77,49 +96,60 @@ class PromiseCancellable<T> extends Promise<T> {
     values: Iterable<T | PromiseLike<T>>,
     controller?: PromiseCancellableController,
   ): PromiseCancellable<Awaited<T>> {
-    const p = super.race(values) as PromiseCancellable<Awaited<T>>;
+    // The `super.race` calls `new PromiseCancellable`
+    const pC = super.race(values) as PromiseCancellable<Awaited<T>>;
     if (typeof controller === 'function') {
-      controller(p.abortController.signal);
+      pC.abortController = new AbortController();
+      controller(pC.abortController.signal);
     } else if (controller != null) {
-      p.abortController = controller;
+      pC.abortController = controller;
     } else {
-      p.abortController.signal.onabort = () => {
-        p.reject(p.abortController.signal.reason);
-      };
+      pC.abortController.signal.addEventListener(
+        'abort',
+        () => {
+          pC.reject(pC.abortController.signal.reason);
+        },
+        { once: true },
+      );
     }
-    return p;
+    return pC;
   }
 
   public static any<T extends readonly unknown[] | []>(
     values: T,
     controller?: PromiseCancellableController,
-  ): Promise<Awaited<T[number]>>;
+  ): PromiseCancellable<Awaited<T[number]>>;
   public static any<T>(
     values: Iterable<T | PromiseLike<T>>,
     controller?: PromiseCancellableController,
-  ): Promise<Awaited<T>>;
+  ): PromiseCancellable<Awaited<T>>;
   public static any<T>(
     values: Iterable<T | PromiseLike<T>>,
     controller?: PromiseCancellableController,
   ): PromiseCancellable<Awaited<T>> {
-    const p = super.any(values) as PromiseCancellable<Awaited<T>>;
+    // The `super.any` calls `new PromiseCancellable`
+    const pC = super.any(values) as PromiseCancellable<Awaited<T>>;
     if (typeof controller === 'function') {
-      controller(p.abortController.signal);
+      pC.abortController = new AbortController();
+      controller(pC.abortController.signal);
     } else if (controller != null) {
-      p.abortController = controller;
+      pC.abortController = controller;
     } else {
-      p.abortController.signal.onabort = () => {
-        p.reject(p.abortController.signal.reason);
-      };
+      pC.abortController.signal.addEventListener(
+        'abort',
+        () => {
+          pC.reject(pC.abortController.signal.reason);
+        },
+        { once: true },
+      );
     }
-    return p;
+    return pC;
   }
 
   public static from<T>(
     p: PromiseLike<T>,
     controller?: PromiseCancellableController,
   ): PromiseCancellable<T> {
-    if (p instanceof PromiseCancellable) return p;
     if (typeof controller === 'function') {
       return new this<T>((resolve, reject, signal) => {
         controller(signal);
@@ -131,9 +161,13 @@ class PromiseCancellable<T> extends Promise<T> {
       }, controller);
     } else {
       return new this<T>((resolve, reject, signal) => {
-        signal.onabort = () => {
-          reject(signal.reason);
-        };
+        signal.addEventListener(
+          'abort',
+          () => {
+            reject(signal.reason);
+          },
+          { once: true },
+        );
         void p.then(resolve, reject);
       });
     }
@@ -188,21 +222,11 @@ class PromiseCancellable<T> extends Promise<T> {
     if (typeof onRejected === 'function') {
       onRejected_ = (reason: any) => onRejected(reason, signal);
     }
-    const p = super.then<TResult1, TResult2>(
-      onFulfilled_,
-      onRejected_,
-    ) as PromiseCancellable<TResult1 | TResult2>;
-    if (typeof controller === 'function') {
-      controller(p.abortController.signal);
-    } else if (controller != null) {
-      p.abortController = controller;
-    } else {
-      p.abortController.signal.onabort = () => {
-        p.reject(p.abortController.signal.reason);
-      };
-    }
-    signal = p.abortController.signal;
-    return p;
+    // The `super.then` uses `Symbol.species`, and it is a native promise
+    const p = super.then<TResult1, TResult2>(onFulfilled_, onRejected_);
+    const pC = PromiseCancellable.from(p, controller);
+    signal = pC.abortController.signal;
+    return pC;
   }
 
   public catch<TResult = never>(
@@ -218,18 +242,17 @@ class PromiseCancellable<T> extends Promise<T> {
     if (typeof onRejected === 'function') {
       onRejected_ = (reason: any) => onRejected(reason, signal);
     }
-    const p = super.catch(onRejected_) as PromiseCancellable<T | TResult>;
+    // The `super.catch` calls `this.then`
+    // so this is already a `PromiseCancellable`
+    const pC = super.catch(onRejected_) as PromiseCancellable<T | TResult>;
     if (typeof controller === 'function') {
-      controller(p.abortController.signal);
+      pC.abortController = new AbortController();
+      controller(pC.abortController.signal);
     } else if (controller != null) {
-      p.abortController = controller;
-    } else {
-      p.abortController.signal.onabort = () => {
-        p.reject(p.abortController.signal.reason);
-      };
+      pC.abortController = controller;
     }
-    signal = p.abortController.signal;
-    return p;
+    signal = pC.abortController.signal;
+    return pC;
   }
 
   public finally(
@@ -242,18 +265,17 @@ class PromiseCancellable<T> extends Promise<T> {
     if (typeof onFinally === 'function') {
       onFinally_ = () => onFinally(signal);
     }
-    const p = super.finally(onFinally_) as PromiseCancellable<T>;
+    // The `super.finally` calls `this.then`
+    // so this is already a `PromiseCancellable`
+    const pC = super.finally(onFinally_) as PromiseCancellable<T>;
     if (typeof controller === 'function') {
-      controller(p.abortController.signal);
+      pC.abortController = new AbortController();
+      controller(pC.abortController.signal);
     } else if (controller != null) {
-      p.abortController = controller;
-    } else {
-      p.abortController.signal.onabort = () => {
-        p.reject(p.abortController.signal.reason);
-      };
+      pC.abortController = controller;
     }
-    signal = p.abortController.signal;
-    return p;
+    signal = pC.abortController.signal;
+    return pC;
   }
 }
 

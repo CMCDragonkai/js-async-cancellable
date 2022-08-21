@@ -2,4 +2,8 @@ type PromiseCancellableController =
   | ((signal: AbortSignal) => void)
   | AbortController;
 
-export type { PromiseCancellableController };
+type PromiseLikeCancellable<T> = PromiseLike<T> & {
+  cancel(reason?: any): void;
+};
+
+export type { PromiseCancellableController, PromiseLikeCancellable };
