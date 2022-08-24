@@ -17,7 +17,7 @@ describe(PromiseCancellable.name, () => {
               reject(new Error('Aborted F', { cause: ctx.signal!.reason }));
             }
           },
-          { once: true }
+          { once: true },
         );
       }
     });
@@ -283,7 +283,6 @@ describe(PromiseCancellable.name, () => {
       });
       p3.cancel('P3 abort');
       await expect(p3).rejects.toBe('P1 abort');
-      // await expect(p3).rejects.toBe('P2 abort beginning');
       await expect(p1).rejects.toBe('P1 abort');
       expect(p2Resolve).not.toBeCalled();
       expect(p2Reject).toBeCalledWith('P1 abort', expect.any(AbortSignal));
@@ -543,7 +542,7 @@ describe(PromiseCancellable.name, () => {
         Promise.resolve(1),
         PromiseCancellable.resolve(2),
         3,
-        4
+        4,
       ]);
       const results = await p;
       expect(results).toStrictEqual([1, 2, 3, 4]);
@@ -553,14 +552,14 @@ describe(PromiseCancellable.name, () => {
         Promise.reject(1),
         PromiseCancellable.resolve(2),
         3,
-        4
+        4,
       ]);
       await expect(p1).rejects.toBe(1);
       const p2 = PromiseCancellable.all([
         Promise.resolve(1),
         PromiseCancellable.reject(2),
         3,
-        4
+        4,
       ]);
       await expect(p2).rejects.toBe(2);
     });
@@ -572,11 +571,7 @@ describe(PromiseCancellable.name, () => {
           reject('P1 abort');
         };
       });
-      const p2 = PromiseCancellable.all([
-        PromiseCancellable.all([
-          p1
-        ])
-      ]);
+      const p2 = PromiseCancellable.all([PromiseCancellable.all([p1])]);
       await expect(p2).rejects.toBe('P1 reject');
     });
     test('default cancellation is early rejection', async () => {
@@ -594,26 +589,32 @@ describe(PromiseCancellable.name, () => {
     });
     test('custom signal handler', async () => {
       const abortController = new AbortController();
-      const p = PromiseCancellable.all([
-        f({ signal: abortController.signal }),
-        f({ signal: abortController.signal }),
-        f({ signal: abortController.signal }),
-      ], (signal) => {
-        signal.onabort = () => {
-          abortController.abort(signal.reason);
-        };
-      });
+      const p = PromiseCancellable.all(
+        [
+          f({ signal: abortController.signal }),
+          f({ signal: abortController.signal }),
+          f({ signal: abortController.signal }),
+        ],
+        (signal) => {
+          signal.onabort = () => {
+            abortController.abort(signal.reason);
+          };
+        },
+      );
       p.cancel('P abort');
       await expect(p).rejects.toThrow('Aborted F');
       await expect(p).rejects.toHaveProperty('cause', 'P abort');
     });
     test('custom abort controller', async () => {
       const abortController = new AbortController();
-      const p = PromiseCancellable.all([
-        f({ signal: abortController.signal }),
-        f({ signal: abortController.signal }),
-        f({ signal: abortController.signal }),
-      ], abortController);
+      const p = PromiseCancellable.all(
+        [
+          f({ signal: abortController.signal }),
+          f({ signal: abortController.signal }),
+          f({ signal: abortController.signal }),
+        ],
+        abortController,
+      );
       p.cancel('P abort');
       await expect(p).rejects.toThrow('Aborted F');
       await expect(p).rejects.toHaveProperty('cause', 'P abort');
@@ -625,25 +626,25 @@ describe(PromiseCancellable.name, () => {
         Promise.resolve(1),
         PromiseCancellable.resolve(2),
         3,
-        4
+        4,
       ]);
       const results = await p;
       expect(results).toStrictEqual([
         {
           status: 'fulfilled',
-          value: 1
+          value: 1,
         },
         {
           status: 'fulfilled',
-          value: 2
+          value: 2,
         },
         {
           status: 'fulfilled',
-          value: 3
+          value: 3,
         },
         {
           status: 'fulfilled',
-          value: 4
+          value: 4,
         },
       ]);
     });
@@ -652,25 +653,25 @@ describe(PromiseCancellable.name, () => {
         Promise.reject(1),
         PromiseCancellable.reject(2),
         3,
-        4
+        4,
       ]);
       const results = await p;
       expect(results).toStrictEqual([
         {
           status: 'rejected',
-          reason: 1
+          reason: 1,
         },
         {
           status: 'rejected',
-          reason: 2
+          reason: 2,
         },
         {
           status: 'fulfilled',
-          value: 3
+          value: 3,
         },
         {
           status: 'fulfilled',
-          value: 4
+          value: 4,
         },
       ]);
     });
@@ -683,17 +684,19 @@ describe(PromiseCancellable.name, () => {
         };
       });
       const p2 = PromiseCancellable.allSettled([
-        PromiseCancellable.allSettled([
-          p1
-        ])
+        PromiseCancellable.allSettled([p1]),
       ]);
-      await expect(p2).resolves.toStrictEqual([{
-        status: 'fulfilled',
-        value: [{
-          status: 'rejected',
-          reason: 'P1 reject'
-        }]
-      }]);
+      await expect(p2).resolves.toStrictEqual([
+        {
+          status: 'fulfilled',
+          value: [
+            {
+              status: 'rejected',
+              reason: 'P1 reject',
+            },
+          ],
+        },
+      ]);
     });
     test('default cancellation is early rejection', async () => {
       const p1 = new PromiseCancellable<string>((resolve, reject, signal) => {
@@ -710,15 +713,18 @@ describe(PromiseCancellable.name, () => {
     });
     test('custom signal handler', async () => {
       const abortController = new AbortController();
-      const p = PromiseCancellable.allSettled([
-        f({ signal: abortController.signal }),
-        f({ signal: abortController.signal }),
-        f({ signal: abortController.signal }),
-      ], (signal) => {
-        signal.onabort = () => {
-          abortController.abort(signal.reason);
-        };
-      });
+      const p = PromiseCancellable.allSettled(
+        [
+          f({ signal: abortController.signal }),
+          f({ signal: abortController.signal }),
+          f({ signal: abortController.signal }),
+        ],
+        (signal) => {
+          signal.onabort = () => {
+            abortController.abort(signal.reason);
+          };
+        },
+      );
       p.cancel('P abort');
       const results = await p;
       expect(results).toMatchObject([
@@ -727,34 +733,37 @@ describe(PromiseCancellable.name, () => {
           reason: expect.objectContaining({
             name: 'Error',
             message: 'Aborted F',
-            cause: 'P abort'
-          })
+            cause: 'P abort',
+          }),
         },
         {
           status: 'rejected',
           reason: expect.objectContaining({
             name: 'Error',
             message: 'Aborted F',
-            cause: 'P abort'
-          })
+            cause: 'P abort',
+          }),
         },
         {
           status: 'rejected',
           reason: expect.objectContaining({
             name: 'Error',
             message: 'Aborted F',
-            cause: 'P abort'
-          })
+            cause: 'P abort',
+          }),
         },
       ]);
     });
     test('custom abort controller', async () => {
       const abortController = new AbortController();
-      const p = PromiseCancellable.allSettled([
-        f({ signal: abortController.signal }),
-        f({ signal: abortController.signal }),
-        f({ signal: abortController.signal }),
-      ], abortController);
+      const p = PromiseCancellable.allSettled(
+        [
+          f({ signal: abortController.signal }),
+          f({ signal: abortController.signal }),
+          f({ signal: abortController.signal }),
+        ],
+        abortController,
+      );
       p.cancel('P abort');
       const results = await p;
       expect(results).toMatchObject([
@@ -763,24 +772,24 @@ describe(PromiseCancellable.name, () => {
           reason: expect.objectContaining({
             name: 'Error',
             message: 'Aborted F',
-            cause: 'P abort'
-          })
+            cause: 'P abort',
+          }),
         },
         {
           status: 'rejected',
           reason: expect.objectContaining({
             name: 'Error',
             message: 'Aborted F',
-            cause: 'P abort'
-          })
+            cause: 'P abort',
+          }),
         },
         {
           status: 'rejected',
           reason: expect.objectContaining({
             name: 'Error',
             message: 'Aborted F',
-            cause: 'P abort'
-          })
+            cause: 'P abort',
+          }),
         },
       ]);
     });
@@ -791,9 +800,9 @@ describe(PromiseCancellable.name, () => {
         Promise.resolve(1),
         PromiseCancellable.resolve(2),
         3,
-        4
+        4,
       ]);
-      expect([1,2,3,4]).toContain(await p1);
+      expect([1, 2, 3, 4]).toContain(await p1);
       const p2 = PromiseCancellable.race([
         new Promise((resolve) => setTimeout(() => resolve(1), 100)),
         new Promise((resolve) => setTimeout(() => resolve(2), 50)),
@@ -825,11 +834,7 @@ describe(PromiseCancellable.name, () => {
           reject('P1 abort');
         };
       });
-      const p2 = PromiseCancellable.race([
-        PromiseCancellable.race([
-          p1
-        ])
-      ]);
+      const p2 = PromiseCancellable.race([PromiseCancellable.race([p1])]);
       await expect(p2).rejects.toBe('P1 reject');
     });
     test('default cancellation is early rejection', async () => {
@@ -847,56 +852,63 @@ describe(PromiseCancellable.name, () => {
     });
     test('custom signal handler', async () => {
       const abortController = new AbortController();
-      const p = PromiseCancellable.race([
-        f({ signal: abortController.signal }),
-        f({ signal: abortController.signal }),
-        f({ signal: abortController.signal }),
-      ], (signal) => {
-        signal.onabort = () => {
-          abortController.abort(signal.reason);
-        };
-      });
+      const p = PromiseCancellable.race(
+        [
+          f({ signal: abortController.signal }),
+          f({ signal: abortController.signal }),
+          f({ signal: abortController.signal }),
+        ],
+        (signal) => {
+          signal.onabort = () => {
+            abortController.abort(signal.reason);
+          };
+        },
+      );
       p.cancel('P abort');
       await expect(p).rejects.toThrow('Aborted F');
       await expect(p).rejects.toHaveProperty('cause', 'P abort');
     });
     test('custom abort controller', async () => {
       const abortController = new AbortController();
-      const p = PromiseCancellable.race([
-        f({ signal: abortController.signal }),
-        f({ signal: abortController.signal }),
-        f({ signal: abortController.signal }),
-      ], abortController);
+      const p = PromiseCancellable.race(
+        [
+          f({ signal: abortController.signal }),
+          f({ signal: abortController.signal }),
+          f({ signal: abortController.signal }),
+        ],
+        abortController,
+      );
       p.cancel('P abort');
       await expect(p).rejects.toThrow('Aborted F');
       await expect(p).rejects.toHaveProperty('cause', 'P abort');
     });
     test('racing signal handler', async () => {
-      const racer = jest.fn().mockImplementation((name: string, delay: number) => {
-        return new PromiseCancellable<string>((resolve, reject, signal) => {
-          if (signal.aborted) {
-            reject('racer abort beginning');
-            return;
-          }
-          const timeout = setTimeout(() => resolve(`racer ${name} result`), delay);
-          signal.addEventListener(
-            'abort',
-            () => {
-              clearTimeout(timeout);
-              reject('racer abort during');
-            },
-            { once: true }
-          );
+      const racer = jest
+        .fn()
+        .mockImplementation((name: string, delay: number) => {
+          return new PromiseCancellable<string>((resolve, reject, signal) => {
+            if (signal.aborted) {
+              reject('racer abort beginning');
+              return;
+            }
+            const timeout = setTimeout(
+              () => resolve(`racer ${name} result`),
+              delay,
+            );
+            signal.addEventListener(
+              'abort',
+              () => {
+                clearTimeout(timeout);
+                reject('racer abort during');
+              },
+              { once: true },
+            );
+          });
         });
-      });
-      const race = [
-        racer('1', 50),
-        racer('2', 100),
-        racer('3', 150),
-      ];
+      const race = [racer('1', 50), racer('2', 100), racer('3', 150)];
       const p = PromiseCancellable.race(race, (signal) => {
         signal.onabort = () => {
-          race.map(r => r.cancel(signal.reason));
+          race.map((r) => r.cancel(signal.reason));
         };
       });
       const result = await p;
@@ -912,10 +924,10 @@ describe(PromiseCancellable.name, () => {
         Promise.resolve(1),
         PromiseCancellable.resolve(2),
         3,
-        Promise.reject(4)
+        Promise.reject(4),
       ]);
       const result = await p1;
-      expect([1,2,3]).toContain(result);
+      expect([1, 2, 3]).toContain(result);
       expect(result).not.toBe(4);
       const p2 = PromiseCancellable.any([
         new Promise((resolve) => setTimeout(() => resolve(1), 100)),
@@ -946,18 +958,14 @@ describe(PromiseCancellable.name, () => {
           reject('P1 abort');
         };
       });
-      const p2 = PromiseCancellable.any([
-        PromiseCancellable.any([
-          p1
-        ])
-      ]);
+      const p2 = PromiseCancellable.any([PromiseCancellable.any([p1])]);
       await expect(p2).rejects.toThrow(AggregateError);
       await expect(p2).rejects.toMatchObject({
         errors: [
           {
-            errors: ['P1 reject']
-          }
-        ]
+            errors: ['P1 reject'],
+          },
+        ],
       });
     });
     test('default cancellation is early rejection', async () => {
@@ -975,58 +983,64 @@ describe(PromiseCancellable.name, () => {
     });
     test('custom signal handler', async () => {
       const abortController = new AbortController();
-      const p = PromiseCancellable.any([
-        f({ signal: abortController.signal }),
-        f({ signal: abortController.signal }),
-        f({ signal: abortController.signal }),
-      ], (signal) => {
-        signal.onabort = () => {
-          abortController.abort(signal.reason);
-        };
-      });
+      const p = PromiseCancellable.any(
+        [
+          f({ signal: abortController.signal }),
+          f({ signal: abortController.signal }),
+          f({ signal: abortController.signal }),
+        ],
+        (signal) => {
+          signal.onabort = () => {
+            abortController.abort(signal.reason);
+          };
+        },
+      );
       p.cancel('P abort');
       await expect(p).rejects.toThrow(AggregateError);
       await expect(p).rejects.toMatchObject({
         errors: [
           {
             message: 'Aborted F',
-            cause: 'P abort'
+            cause: 'P abort',
           },
           {
             message: 'Aborted F',
-            cause: 'P abort'
+            cause: 'P abort',
           },
           {
             message: 'Aborted F',
-            cause: 'P abort'
-          }
-        ]
+            cause: 'P abort',
+          },
+        ],
       });
     });
     test('custom abort controller', async () => {
       const abortController = new AbortController();
-      const p = PromiseCancellable.any([
-        f({ signal: abortController.signal }),
-        f({ signal: abortController.signal }),
-        f({ signal: abortController.signal }),
-      ], abortController);
+      const p = PromiseCancellable.any(
+        [
+          f({ signal: abortController.signal }),
+          f({ signal: abortController.signal }),
+          f({ signal: abortController.signal }),
+        ],
+        abortController,
+      );
       p.cancel('P abort');
       await expect(p).rejects.toThrow(AggregateError);
       await expect(p).rejects.toMatchObject({
         errors: [
           {
             message: 'Aborted F',
-            cause: 'P abort'
+            cause: 'P abort',
           },
           {
             message: 'Aborted F',
-            cause: 'P abort'
+            cause: 'P abort',
           },
           {
             message: 'Aborted F',
-            cause: 'P abort'
-          }
-        ]
+            cause: 'P abort',
+          },
+        ],
       });
     });
   });

@@ -164,7 +164,7 @@ class PromiseCancellable<T> extends Promise<T> {
             signalHandled = true;
           }
           return Reflect.set(target, prop, value);
-        }
+        },
       });
       signalHandled = false;
     }
