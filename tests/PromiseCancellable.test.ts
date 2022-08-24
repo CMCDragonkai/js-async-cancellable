@@ -23,6 +23,13 @@ describe(PromiseCancellable.name, () => {
     });
   }
   describe('new PromiseCancellable', () => {
+    test('default is early rejection', async () => {
+      const pC = new PromiseCancellable<void>((resolve) => {
+        setTimeout(() => resolve(), 100);
+      });
+      pC.cancel('cancellation');
+      await expect(pC).rejects.toBe('cancellation');
+    });
     test('constructing promise cancellable', async () => {
       let timeout: ReturnType<typeof setTimeout> | undefined;
       const pC = new PromiseCancellable<void>((resolve, reject, signal) => {
@@ -276,6 +283,7 @@ describe(PromiseCancellable.name, () => {
       });
       p3.cancel('P3 abort');
       await expect(p3).rejects.toBe('P1 abort');
+      // await expect(p3).rejects.toBe('P2 abort beginning');
       await expect(p1).rejects.toBe('P1 abort');
       expect(p2Resolve).not.toBeCalled();
       expect(p2Reject).toBeCalledWith('P1 abort', expect.any(AbortSignal));

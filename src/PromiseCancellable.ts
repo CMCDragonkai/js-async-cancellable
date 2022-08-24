@@ -37,14 +37,6 @@ class PromiseCancellable<T> extends Promise<T> {
       controller(pC.abortController.signal);
     } else if (controller != null) {
       pC.abortController = controller;
-    } else {
-      pC.abortController.signal.addEventListener(
-        'abort',
-        () => {
-          pC.reject(pC.abortController.signal.reason);
-        },
-        { once: true },
-      );
     }
     return pC;
   }
@@ -72,14 +64,6 @@ class PromiseCancellable<T> extends Promise<T> {
       controller(pC.abortController.signal);
     } else if (controller != null) {
       pC.abortController = controller;
-    } else {
-      pC.abortController.signal.addEventListener(
-        'abort',
-        () => {
-          pC.reject(pC.abortController.signal.reason);
-        },
-        { once: true },
-      );
     }
     return pC;
   }
@@ -103,14 +87,6 @@ class PromiseCancellable<T> extends Promise<T> {
       controller(pC.abortController.signal);
     } else if (controller != null) {
       pC.abortController = controller;
-    } else {
-      pC.abortController.signal.addEventListener(
-        'abort',
-        () => {
-          pC.reject(pC.abortController.signal.reason);
-        },
-        { once: true },
-      );
     }
     return pC;
   }
@@ -134,14 +110,6 @@ class PromiseCancellable<T> extends Promise<T> {
       controller(pC.abortController.signal);
     } else if (controller != null) {
       pC.abortController = controller;
-    } else {
-      pC.abortController.signal.addEventListener(
-        'abort',
-        () => {
-          pC.reject(pC.abortController.signal.reason);
-        },
-        { once: true },
-      );
     }
     return pC;
   }
@@ -150,27 +118,9 @@ class PromiseCancellable<T> extends Promise<T> {
     p: PromiseLike<T>,
     controller?: PromiseCancellableController,
   ): PromiseCancellable<T> {
-    if (typeof controller === 'function') {
-      return new this<T>((resolve, reject, signal) => {
-        controller(signal);
-        void p.then(resolve, reject);
-      });
-    } else if (controller != null) {
-      return new this<T>((resolve, reject) => {
-        void p.then(resolve, reject);
-      }, controller);
-    } else {
-      return new this<T>((resolve, reject, signal) => {
-        signal.addEventListener(
-          'abort',
-          () => {
-            reject(signal.reason);
-          },
-          { once: true },
-        );
-        void p.then(resolve, reject);
-      });
-    }
+    return new this<T>((resolve, reject) => {
+      void p.then(resolve, reject);
+    }, controller);
   }
 
   protected readonly reject: (reason?: any) => void;
@@ -182,13 +132,56 @@ class PromiseCancellable<T> extends Promise<T> {
       reject: (reason?: any) => void,
       signal: AbortSignal,
     ) => void,
-    abortController: AbortController = new AbortController(),
+    controller?: PromiseCancellableController,
   ) {
+    let abortController: AbortController;
+    let signal: AbortSignal;
+    let signalHandled: boolean;
+    if (typeof controller === 'function') {
+      abortController = new AbortController();
+      controller(abortController.signal);
+      signal = abortController.signal;
+      signalHandled = true;
+    } else if (controller != null) {
+      abortController = controller;
+      signal = controller.signal;
+      signalHandled = true;
+    } else {
+      abortController = new AbortController();
+      signal = new Proxy(abortController.signal, {
+        get(target, prop, receiver) {
+          if (prop === 'addEventListener') {
+            return function addEventListener(...args) {
+              signalHandled = true;
+              return target[prop].apply(this, args);
+            };
+          } else {
+            return Reflect.get(target, prop, receiver);
+          }
+        },
+        set(target, prop, value) {
+          if (prop === 'onabort') {
+            signalHandled = true;
+          }
+          return Reflect.set(target, prop, value);
+        }
+      });
+      signalHandled = false;
+    }
     let reject_: (reason?: any) => void;
     super((resolve, reject) => {
       reject_ = reject;
-      executor(resolve, reject, abortController.signal);
+      executor(resolve, reject, signal);
     });
+    if (!signalHandled) {
+      abortController.signal.addEventListener(
+        'abort',
+        () => {
+          reject_(abortController.signal.reason);
+        },
+        { once: true },
+      );
+    }
     this.reject = reject_!;
     this.abortController = abortController;
   }
