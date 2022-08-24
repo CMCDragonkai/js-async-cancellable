@@ -14,6 +14,7 @@ describe(PromiseCancellable.name, () => {
             if (ctx.signal!.reason === undefined) {
               reject(new Error('Aborted F'));
             } else {
+              // @ts-ignore node supports cause property
               reject(new Error('Aborted F', { cause: ctx.signal!.reason }));
             }
           },
