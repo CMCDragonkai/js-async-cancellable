@@ -26,10 +26,45 @@ describe(PromiseCancellable.name, () => {
   describe('new PromiseCancellable', () => {
     test('default is early rejection', async () => {
       const pC = new PromiseCancellable<void>((resolve) => {
-        setTimeout(() => resolve(), 100);
+        setTimeout(() => resolve(), 10);
       });
       pC.cancel('cancellation');
       await expect(pC).rejects.toBe('cancellation');
+    });
+    test('override default early rejection by interacting with signal', async () => {
+      const p1 = new PromiseCancellable<void>((resolve, _reject, signal) => {
+        // @ts-ignore force delete
+        delete signal.onabort;
+        setTimeout(() => resolve(), 10);
+      });
+      p1.cancel('cancellation');
+      await expect(p1).resolves.toBeUndefined();
+      const p2 = new PromiseCancellable<void>((resolve, _reject, signal) => {
+        signal.onabort = null;
+        setTimeout(() => resolve(), 10);
+      });
+      p2.cancel('cancellation');
+      await expect(p2).resolves.toBeUndefined();
+      const p3 = new PromiseCancellable<void>((resolve, _reject, signal) => {
+        signal.onabort = () => {};
+        setTimeout(() => resolve(), 10);
+      });
+      p3.cancel('cancellation');
+      await expect(p3).resolves.toBeUndefined();
+      const p4 = new PromiseCancellable<void>((resolve, _reject, signal) => {
+        signal.addEventListener('abort', () => {});
+        setTimeout(() => resolve(), 10);
+      });
+      p4.cancel('cancellation');
+      await expect(p4).resolves.toBeUndefined();
+      // This will not override default behaviour
+      const p5 = new PromiseCancellable<void>((resolve, _reject, signal) => {
+        signal.onabort;
+        signal.addEventListener;
+        setTimeout(() => resolve(), 10);
+      });
+      p5.cancel('cancellation');
+      await expect(p5).rejects.toBe('cancellation');
     });
     test('constructing promise cancellable', async () => {
       let timeout: ReturnType<typeof setTimeout> | undefined;
