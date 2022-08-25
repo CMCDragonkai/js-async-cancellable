@@ -1,6 +1,6 @@
 {
   "name": "@matrixai/async-cancellable",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Roger Qiu",
   "description": "Asynchronous Cancellation",
   "keywords": [
