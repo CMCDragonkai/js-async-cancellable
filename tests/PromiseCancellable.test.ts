@@ -159,7 +159,9 @@ describe(PromiseCancellable.name, () => {
       const p = f({ signal: abortController.signal });
       const pC = PromiseCancellable.from(p);
       pC.cancel();
-      await expect(pC).rejects.toBeUndefined();
+      // Should reject
+      const rejectSymbol = Symbol('rejected');
+      await expect(pC.catch(() => rejectSymbol)).resolves.toEqual(rejectSymbol);
       await expect(p).resolves.toBe('Result');
     });
   });

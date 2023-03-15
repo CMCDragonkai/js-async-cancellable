@@ -196,6 +196,11 @@ class PromiseCancellable<T> extends Promise<T> {
     return this.constructor.name;
   }
 
+  /**
+   * If a reason is not given or `undefined` then the `signal.reason` can be
+   * `DOMException [AbortError]: This operation was aborted` on the newer
+   * versions of node.
+   */
   public cancel(reason?: any): void {
     this.abortController.abort(reason);
   }
