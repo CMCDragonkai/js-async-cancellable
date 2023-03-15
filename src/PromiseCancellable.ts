@@ -1,5 +1,7 @@
 import type { PromiseCancellableController } from './types';
 
+const symbolUndefinedReason = Symbol('symbolUndefinedReason');
+
 class PromiseCancellable<T> extends Promise<T> {
   public static get [Symbol.species](): PromiseConstructor {
     return Promise;
@@ -183,7 +185,11 @@ class PromiseCancellable<T> extends Promise<T> {
       abortController.signal.addEventListener(
         'abort',
         () => {
-          reject_(abortController.signal.reason);
+          if (abortController.signal.reason === symbolUndefinedReason) {
+            reject_(undefined);
+          } else {
+            reject_(abortController.signal.reason);
+          }
         },
         { once: true },
       );
@@ -197,6 +203,7 @@ class PromiseCancellable<T> extends Promise<T> {
   }
 
   public cancel(reason?: any): void {
+    if (reason === undefined) reason = symbolUndefinedReason;
     this.abortController.abort(reason);
   }
 
