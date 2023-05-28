@@ -1,5 +1,7 @@
 import type { PromiseCancellableController } from './types';
 
+const abortUndefinedReason = Symbol('abort undefined');
+
 class PromiseCancellable<T> extends Promise<T> {
   public static get [Symbol.species](): PromiseConstructor {
     return Promise;
@@ -183,7 +185,11 @@ class PromiseCancellable<T> extends Promise<T> {
       abortController.signal.addEventListener(
         'abort',
         () => {
-          reject_(abortController.signal.reason);
+          if (abortController.signal.reason === abortUndefinedReason) {
+            reject_(undefined);
+          } else {
+            reject_(abortController.signal.reason);
+          }
         },
         { once: true },
       );
@@ -196,12 +202,14 @@ class PromiseCancellable<T> extends Promise<T> {
     return this.constructor.name;
   }
 
-  /**
-   * If a reason is not given or `undefined` then the `signal.reason` can be
-   * `DOMException [AbortError]: This operation was aborted` on the newer
-   * versions of node.
-   */
   public cancel(reason?: any): void {
+    // If a reason is not given or `undefined`, then the `signal.reason` will
+    // be `DOMException [AbortError]: This operation was aborted`.
+    // This swaps it for our internal symbol, which will swapped for `undefined`
+    // on the event listener.
+    if (reason === undefined) {
+      reason = abortUndefinedReason;
+    }
     this.abortController.abort(reason);
   }
 
