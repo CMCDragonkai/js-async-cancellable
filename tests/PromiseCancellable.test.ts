@@ -1,4 +1,4 @@
-import PromiseCancellable from '@/PromiseCancellable';
+import PromiseCancellable, { abortUndefinedReason } from '@/PromiseCancellable';
 
 describe(PromiseCancellable.name, () => {
   function f(ctx?: { signal?: AbortSignal }): Promise<string> {
@@ -24,6 +24,13 @@ describe(PromiseCancellable.name, () => {
     });
   }
   describe('new PromiseCancellable', () => {
+    test('cancel with undefined reason', async () => {
+      const pC = new PromiseCancellable<void>((resolve) => {
+        setTimeout(() => resolve(), 10);
+      });
+      pC.cancel();
+      await expect(pC).rejects.toBeUndefined();
+    });
     test('default is early rejection', async () => {
       const pC = new PromiseCancellable<void>((resolve) => {
         setTimeout(() => resolve(), 10);
@@ -58,13 +65,23 @@ describe(PromiseCancellable.name, () => {
       p4.cancel('cancellation');
       await expect(p4).resolves.toBeUndefined();
       // This will not override default behaviour
-      const p5 = new PromiseCancellable<void>((resolve, _reject, signal) => {
-        signal.onabort;
-        signal.addEventListener;
+      const p5 = new PromiseCancellable<void>((resolve, _reject, _signal) => {
         setTimeout(() => resolve(), 10);
       });
       p5.cancel('cancellation');
+      // This will cancel with `undefined`
+      // Notice that the internal `signal.reason` is in fact `abortUndefinedReason`
+      // However at the end it will be rejected as `undefined`.
       await expect(p5).rejects.toBe('cancellation');
+      const p6 = new PromiseCancellable<void>((resolve, reject, signal) => {
+        signal.onabort = () => {
+          expect(signal.reason).toBe(abortUndefinedReason);
+          reject(signal.reason);
+        };
+        setTimeout(() => resolve(), 10);
+      });
+      p6.cancel();
+      await expect(p6).rejects.toBeUndefined();
     });
     test('constructing promise cancellable', async () => {
       let timeout: ReturnType<typeof setTimeout> | undefined;
