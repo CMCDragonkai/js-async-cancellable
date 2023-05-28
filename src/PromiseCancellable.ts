@@ -221,8 +221,6 @@ class PromiseCancellable<T> extends Promise<T> {
       reason = abortUndefinedReason;
     }
     this.abortController.abort(reason);
-    // Unfortunately the `this.abortController.signal.reason` is readonly.
-    // So we cannot simply mutate it to be `undefined`.
   }
 
   public then<TResult1 = T, TResult2 = never>(
