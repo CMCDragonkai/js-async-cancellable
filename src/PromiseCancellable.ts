@@ -1,16 +1,5 @@
 import type { PromiseCancellableController } from './types';
 
-/**
- * This symbol is used as a placeholder for an `undefined` cancel reason.
- * We use this because by default cancelling with `undefined` results in
- * the reason becoming a `DOMException`. We can identify this as the reason
- * and swap it back to being `undefined` during the rejection of the
- * `PromiseCancellable`. However do note that if you supply your own signal
- * handler, the `signal.reason` will be `abortUndefinedReason` because
- * it has not been swapped yet.
- */
-const abortUndefinedReason = Symbol('abort undefined');
-
 class PromiseCancellable<T> extends Promise<T> {
   public static get [Symbol.species](): PromiseConstructor {
     return Promise;
@@ -188,7 +177,10 @@ class PromiseCancellable<T> extends Promise<T> {
     let reject_: (reason?: any) => void;
     super((resolve, reject) => {
       reject_ = (reason?: any) => {
-        if (reason === abortUndefinedReason) {
+        // This swaps the `DOMException [AbortError]` for `undefined`.
+        // This is because we expect aborting or cancelling with `undefined`
+        // should mean rejection of `undefined`.
+        if (reason instanceof DOMException && reason.name === 'AbortError') {
           reason = undefined;
         }
         reject(reason);
@@ -213,13 +205,6 @@ class PromiseCancellable<T> extends Promise<T> {
   }
 
   public cancel(reason?: any): void {
-    // If a reason is not given or `undefined`, then the `signal.reason` will
-    // be `DOMException [AbortError]: This operation was aborted`.
-    // This swaps it for our internal symbol, which will swapped for `undefined`
-    // on the event listener.
-    if (reason === undefined) {
-      reason = abortUndefinedReason;
-    }
     this.abortController.abort(reason);
   }
 
@@ -302,5 +287,3 @@ class PromiseCancellable<T> extends Promise<T> {
 }
 
 export default PromiseCancellable;
-
-export { abortUndefinedReason };
