@@ -1,4 +1,4 @@
-import PromiseCancellable from '@/PromiseCancellable';
+import PromiseCancellable from '#PromiseCancellable.js';
 
 describe(PromiseCancellable.name, () => {
   function f(ctx?: { signal?: AbortSignal }): Promise<string> {

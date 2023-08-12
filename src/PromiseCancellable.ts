@@ -1,4 +1,4 @@
-import type { PromiseCancellableController } from './types';
+import type { PromiseCancellableController } from './types.js';
 
 class PromiseCancellable<T> extends Promise<T> {
   public static get [Symbol.species](): PromiseConstructor {

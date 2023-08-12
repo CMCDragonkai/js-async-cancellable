@@ -12,25 +12,22 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
-    "moduleResolution": "node",
-    "module": "CommonJS",
-    "target": "ES2021",
+    "isolatedModules": true,
+    "moduleResolution": "NodeNext",
+    "module": "ESNext",
+    "target": "ES2022",
     "baseUrl": "./src",
     "paths": {
-      "@": ["index"],
-      "@/*": ["*"]
+      "#*": ["*"]
     },
+    "skipLibCheck": true,
     "noEmit": true
   },
   "include": [
     "./src/**/*",
     "./src/**/*.json",
     "./tests/**/*",
-    "./scripts/**/*"
-  ],
-  "ts-node": {
-    "require": ["tsconfig-paths/register"],
-    "transpileOnly": true,
-    "swc": true
-  }
+    "./scripts/**/*",
+    "./benches/**/*"
+  ]
 }

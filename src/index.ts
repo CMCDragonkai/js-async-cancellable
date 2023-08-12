@@ -1,2 +1,2 @@
-export { default as PromiseCancellable } from './PromiseCancellable';
-export * from './types';
+export { default as PromiseCancellable } from './PromiseCancellable.js';
+export * from './types.js';
