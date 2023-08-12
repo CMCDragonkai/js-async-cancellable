@@ -34,9 +34,9 @@
     "build": "shx rm -rf ./dist && tsc -p ./tsconfig.build.json",
     "postversion": "npm install --package-lock-only --ignore-scripts --silent",
     "tsx": "tsx",
-    "test": "tsc -p ./tsconfig.build.json && NODE_OPTIONS=--experimental-vm-modules jest",
-    "lint": "eslint '{src,tests,scripts,benches}/**/*.{js,ts}'",
-    "lintfix": "eslint '{src,tests,scripts,benches}/**/*.{js,ts}' --fix",
+    "test": "node ./scripts/test.mjs",
+    "lint": "eslint '{src,tests,scripts,benches}/**/*.{js,mjs,ts,mts,jsx,tsx}'",
+    "lintfix": "eslint '{src,tests,scripts,benches}/**/*.{js,mjs,ts,mts,jsx,tsx}' --fix",
     "lint-shell": "find ./src ./tests ./scripts -type f -regextype posix-extended -regex '.*\\.(sh)' -exec shellcheck {} +",
     "docs": "shx rm -rf ./docs && typedoc --gitRevision master --tsconfig ./tsconfig.build.json --out ./docs src"
   },
@@ -47,7 +47,6 @@
     "@types/node": "^18.15.0",
     "@typescript-eslint/eslint-plugin": "^5.61.0",
     "@typescript-eslint/parser": "^5.61.0",
-
     "eslint": "^8.44.0",
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-import": "^2.27.5",
