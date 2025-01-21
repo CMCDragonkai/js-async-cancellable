@@ -1,8 +1,5 @@
 # js-async-cancellable
 
-staging:[![pipeline status](https://gitlab.com/MatrixAI/open-source/js-async-cancellable/badges/staging/pipeline.svg)](https://gitlab.com/MatrixAI/open-source/js-async-cancellable/commits/staging)
-master:[![pipeline status](https://gitlab.com/MatrixAI/open-source/js-async-cancellable/badges/master/pipeline.svg)](https://gitlab.com/MatrixAI/open-source/js-async-cancellable/commits/master)
-
 This library provides the ability to cancel asynchronous tasks. Cancelling asynchronous tasks was never standardised in JavaScript. This was due to the myriad complexity of cancellation illustrated by https://github.com/tc39/proposal-cancellation:
 
 > The following are some architectural observations provided by **Dean Tribble** on the [es-discuss mailing list](https://mail.mozilla.org/pipermail/es-discuss/2015-March/041887.html):
@@ -122,7 +119,7 @@ npm install --save @matrixai/async-cancellable
 
 ## Development
 
-Run `nix-shell`, and once you're inside, you can use:
+Run `nix develop`, and once you're inside, you can use:
 
 ```sh
 # install (or reinstall packages from package.json)
